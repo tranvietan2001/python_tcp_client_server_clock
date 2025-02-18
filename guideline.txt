@@ -1,0 +1,16 @@
+windows: 
+- Cài đặt môi trường python: 
+    + link tải: https://www.python.org/downloads/
+    + thực hiện cài đặt
+    + mở terninal nhập lệnh git --version để kiểm tra phiên bản python sau khi cài đặt xong
+- cài đặt QT create:
+    + link tải: https://build-system.fman.io/qt-designer-download
+    + thực hiện cài đặt
+    + mở ternimal chạy các lệnh sau:
+                                    pip install pyqt6
+                                    pip install pyqt6-tools
+    * fix lỗi Path Too Long: https://www.youtube.com/watch?v=uMxDjyOgLcI
+
+- chuyển đổi file ui (thiết kế gia diện trong QT designer) sang file python
+    + mở ternimal chạy lệnh sau: pyuic6 -x đường_dẫn_đến_file_*.ui -o file_python_*.py
+    + chạy lệnh thành công sẽ xuất thành file python, run chương trình giao diện sẻ xuất hiện
