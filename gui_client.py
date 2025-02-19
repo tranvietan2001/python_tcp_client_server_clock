@@ -7,12 +7,74 @@
 
 
 from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtCore import QPoint, QTime, QTimer
+from PyQt6.QtGui import QColor, QPolygon, QPainter
+import re
+import socket
+import threading
+import time
+
+class AnalogClock(QtWidgets.QWidget):
+    secondHand = QPolygon([
+        QPoint(7, 8),
+        QPoint(-7, 8),
+        QPoint(0, -95)
+    ])
+    hourHand = QPolygon([
+        QPoint(7, 8),
+        QPoint(-7, 8),
+        QPoint(0, -50)
+    ])
+    minuteHand = QPolygon([
+        QPoint(7, 8),
+        QPoint(-7, 8),
+        QPoint(0, -70)
+    ])
+    hourColor = QColor(127, 0, 127)
+    minuteColor = QColor(0, 100, 250, 200)
+    secondColor = QColor(195, 0, 0, 150)
+
+    def __init__(self, parent=None):
+        super(AnalogClock, self).__init__(parent)
+        timer = QTimer(self)
+        timer.timeout.connect(self.update)
+        timer.start(1000)
+        self.setMinimumSize(200, 200)
+
+    def paintEvent(self, event):
+        side = min(self.width(), self.height())
+        time = QTime.currentTime()
+        painter = QPainter(self)
+        painter.translate(self.width() / 2, self.height() / 2)
+        painter.scale(side / 200, side / 200)
+
+        # Vẽ giờ
+        painter.setBrush(AnalogClock.hourColor)
+        painter.save()
+        painter.rotate(30.0 * (time.hour() + time.minute() / 60.0))
+        painter.drawConvexPolygon(AnalogClock.hourHand)
+        painter.restore()
+
+        # Vẽ phút
+        painter.setBrush(AnalogClock.minuteColor)
+        painter.save()
+        painter.rotate(6.0 * (time.minute() + time.second() / 60.0))
+        painter.drawConvexPolygon(AnalogClock.minuteHand)
+        painter.restore()
+
+        # Vẽ giây
+        painter.setBrush(AnalogClock.secondColor)
+        painter.save()
+        painter.rotate(360 * (time.second() / 60.0))
+        painter.drawConvexPolygon(AnalogClock.secondHand)
+        painter.restore()
 
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("CLOCK TCP")
-        MainWindow.resize(622, 790)
+        # MainWindow.resize(622, 790)
+        MainWindow.setFixedSize(622, 790)
         self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.label = QtWidgets.QLabel(parent=self.centralwidget)
@@ -57,13 +119,29 @@ class Ui_MainWindow(object):
         self.label_3.setFont(font)
         self.label_3.setObjectName("label_3")
         self.ipServerTxt = QtWidgets.QLineEdit(parent=self.centralwidget)
-        self.ipServerTxt.setGeometry(QtCore.QRect(140, 41, 201, 31))
+        self.ipServerTxt.setGeometry(QtCore.QRect(140, 40, 110, 31))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.ipServerTxt.setFont(font)
         self.ipServerTxt.setObjectName("ipServerTxt")
+
+        self.label_port = QtWidgets.QLabel(parent=self.centralwidget)
+        self.label_port.setGeometry(QtCore.QRect(260, 50, 50, 16))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_port.setFont(font)
+        self.label_port.setObjectName("label_port")
+        self.portServerTxt = QtWidgets.QLineEdit(parent=self.centralwidget)
+        self.portServerTxt.setGeometry(QtCore.QRect(300, 40, 60, 31))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.portServerTxt.setFont(font)
+        self.portServerTxt.setObjectName("portServerTxt")
+
         self.connectBtn = QtWidgets.QPushButton(parent=self.centralwidget)
-        self.connectBtn.setGeometry(QtCore.QRect(360, 40, 71, 31))
+        self.connectBtn.setGeometry(QtCore.QRect(365, 40, 71, 31))
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(True)
@@ -71,7 +149,7 @@ class Ui_MainWindow(object):
         self.connectBtn.setFont(font)
         self.connectBtn.setObjectName("connectBtn")
         self.statusConnectLb = QtWidgets.QLabel(parent=self.centralwidget)
-        self.statusConnectLb.setGeometry(QtCore.QRect(450, 50, 55, 16))
+        self.statusConnectLb.setGeometry(QtCore.QRect(450, 50, 200, 16))
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(True)
@@ -94,7 +172,7 @@ class Ui_MainWindow(object):
         self.countryTxt.addItem("")
         self.countryTxt.addItem("")
         self.countryTxt.addItem("")
-        
+
         self.dateTxt = QtWidgets.QLabel(parent=self.centralwidget)
         self.dateTxt.setGeometry(QtCore.QRect(60, 170, 141, 20))
         font = QtGui.QFont()
@@ -140,6 +218,13 @@ class Ui_MainWindow(object):
         self.flagLB = QtWidgets.QLabel(parent=self.centralwidget)
         self.flagLB.setGeometry(QtCore.QRect(270, 170, 111, 51))
         self.flagLB.setObjectName("flagLB")
+
+
+
+        # Thêm đồng hồ vào GUI
+        self.clock = AnalogClock(parent=self.centralwidget)
+        self.clock.setGeometry(QtCore.QRect(200, 250, 200, 200))  # Điều chỉnh kích thước và vị trí
+
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 622, 21))
@@ -152,9 +237,18 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+        
+        #-------------------------------------------------------
+        self.statusCloseWindow = False
+        app.aboutToQuit.connect(self.closeEvent)
+        self.connectBtn.clicked.connect(self.connectWithServer)
+
+        #-------------------------------------------------------
+
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "CLOCK"))
 
         self.label.setText(_translate("MainWindow", "Area:"))
         self.areaTxt.setItemText(0, _translate("MainWindow", "item1"))
@@ -169,7 +263,8 @@ class Ui_MainWindow(object):
         self.countryTxt.setItemText(3, _translate("MainWindow", "item4"))
 
 
-        self.label_3.setText(_translate("MainWindow", "IP Server connect:"))
+        self.label_3.setText(_translate("MainWindow", "IPv4 Server connect:"))
+        self.label_port.setText(_translate("MainWindow", "Port:"))
         self.connectBtn.setText(_translate("MainWindow", "Connect"))
         self.statusConnectLb.setText(_translate("MainWindow", "Status:"))
         self.label_5.setText(_translate("MainWindow", "Date:"))
@@ -180,6 +275,100 @@ class Ui_MainWindow(object):
         self.label_8.setText(_translate("MainWindow", "CLOCK PROGRAM (TCP CLIENT SERVER MODEL)"))
         self.flagLB.setText(_translate("MainWindow", "flag"))
 
+    #-------------------------------------------------------
+
+    def connectWithServer(self):
+        print("CONNNECT")
+        ip = self.ipServerTxt.text()
+        if is_valid_ipv4(ip):
+            print(ip)
+            start_thread = threading.Thread(target=self.start_client, args=('127.0.0.1',12345))
+            start_thread.start()
+            
+        else: 
+            self.statusConnectLb.setText("IPv4 ERROR")
+
+
+    def closeEvent(self):
+        print("close Window")  # In ra thông báo khi cửa sổ đóng
+        self.statusCloseWindow = True
+
+    def receive_messages(self, client_socket):
+        while True:
+            try:
+                message = client_socket.recv(1024).decode('utf-8')
+                if message:
+                    print(f"[SERVER] {message}")
+                    self.statusConnectLb.setText("Status: Connected")
+                else:
+                    break
+            except:
+                print("An error occurred!")
+                self.statusConnectLb.setText("Status: ERROR")
+                break
+
+    # Thiết lập client
+    def start_client(self, host='127.0.0.1', port=12345):
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect((host, port))
+
+        # Bắt đầu luồng nhận tin nhắn
+        thread = threading.Thread(target=self.receive_messages, args=(client,))
+        thread.start()
+
+        running = True
+        while running:
+            # message = input("Enter message: ")
+            if(self.statusCloseWindow):
+                self.statusConnectLb.setText("Status: Disconnect")
+                running = False
+            time.sleep(0.5)
+            message = '1'
+            if message.lower() == 'exit':
+                break
+            client.send(message.encode('utf-8'))
+
+        client.close()
+
+#hàm kiểm tra biểu thức chính quy của địa chỉ IPv4
+def is_valid_ipv4(ip):
+    # Biểu thức chính quy cho địa chỉ IPv4
+        pattern = r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+        return re.match(pattern, ip) is not None
+
+# Hàm nhận tin nhắn từ server
+# def receive_messages(client_socket):
+#     while True:
+#         try:
+#             message = client_socket.recv(1024).decode('utf-8')
+#             if message:
+#                 print(f"[SERVER] {message}")
+#             else:
+#                 break
+#         except:
+#             print("An error occurred!")
+#             break
+
+# # Thiết lập client
+# def start_client(host='127.0.0.1', port=12345):
+#     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#     client.connect((host, port))
+
+#     # Bắt đầu luồng nhận tin nhắn
+#     thread = threading.Thread(target=receive_messages, args=(client,))
+#     thread.start()
+
+#     while True:
+#         # message = input("Enter message: ")
+#         time.sleep(1)
+#         message = '1'
+#         if message.lower() == 'exit':
+#             break
+#         client.send(message.encode('utf-8'))
+
+#     client.close()
+
+    #-------------------------------------------------------
 
 if __name__ == "__main__":
     import sys
