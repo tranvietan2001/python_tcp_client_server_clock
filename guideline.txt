@@ -14,3 +14,15 @@ windows:
 - chuyển đổi file ui (thiết kế gia diện trong QT designer) sang file python
     + mở ternimal chạy lệnh sau: pyuic6 -x đường_dẫn_đến_file_*.ui -o file_python_*.py
     + chạy lệnh thành công sẽ xuất thành file python, run chương trình giao diện sẻ xuất hiện
+
+
+
+- RUN CHƯƠNG TRÌNH
+    + mở ternimal, di chuyển đến folder chứa file server.py và gui_client.py
+    + run file server.py trước để khởi tạo server lắng nghe yêu cầu kết nối từ client
+        nhập lệnh trên ternimal: py server.py
+    + run file gui_client để mở giao diện của client, chạy nhiều lần để tahoj nhiều client kết nối tới server
+        nhập lệnh trên ternimal: py gui_client.py
+    + GUI client hiện ra:
+        ~ Điền thông tin server cần kết nối đến: IPv4 và port -> nhấn connect -> status là Connected là đã kết nối thành công
+        ~ Chọn khu vực và quốc gia muốn xem thời gian, ngày giờ -> nhấn nút request -> thông tin sẽ được server gửi trả về và hiển thị trên GUI
