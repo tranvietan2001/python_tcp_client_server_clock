@@ -1,7 +1,7 @@
 # import socket
 
-# HOST = '127.0.0.1'  
-# PORT = 8000        
+HOST = '127.0.0.5'  
+PORT = 8000        
 
 # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # s.bind((HOST, PORT))
@@ -57,7 +57,7 @@ def handle_client(client_socket, addr):
     client_socket.close()
 
 # Thiết lập server
-def start_server(host='0.0.0.0', port=12345):
+def start_server(host=HOST, port=PORT):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((host, port))
     server.listen(5)

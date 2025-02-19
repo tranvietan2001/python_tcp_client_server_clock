@@ -242,7 +242,6 @@ class Ui_MainWindow(object):
         self.statusCloseWindow = False
         app.aboutToQuit.connect(self.closeEvent)
         self.connectBtn.clicked.connect(self.connectWithServer)
-
         #-------------------------------------------------------
 
 
@@ -280,9 +279,11 @@ class Ui_MainWindow(object):
     def connectWithServer(self):
         print("CONNNECT")
         ip = self.ipServerTxt.text()
-        if is_valid_ipv4(ip):
-            print(ip)
-            start_thread = threading.Thread(target=self.start_client, args=('127.0.0.1',12345))
+        port = int(self.portServerTxt.text())
+
+        if is_valid_ipv4(ip) and is_valid_port(int(port)):
+            print(ip, ":", port)
+            start_thread = threading.Thread(target=self.start_client, args=(ip,int(port)))
             start_thread.start()
             
         else: 
@@ -300,15 +301,17 @@ class Ui_MainWindow(object):
                 if message:
                     print(f"[SERVER] {message}")
                     self.statusConnectLb.setText("Status: Connected")
+                    self.connectBtn.setEnabled(False)
                 else:
                     break
             except:
                 print("An error occurred!")
                 self.statusConnectLb.setText("Status: ERROR")
+                self.connectBtn.setEnabled(True)
                 break
 
     # Thiết lập client
-    def start_client(self, host='127.0.0.1', port=12345):
+    def start_client(self, host, port):
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect((host, port))
 
@@ -321,6 +324,7 @@ class Ui_MainWindow(object):
             # message = input("Enter message: ")
             if(self.statusCloseWindow):
                 self.statusConnectLb.setText("Status: Disconnect")
+                self.connectBtn.setEnabled(True)
                 running = False
             time.sleep(0.5)
             message = '1'
@@ -336,39 +340,10 @@ def is_valid_ipv4(ip):
         pattern = r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
         return re.match(pattern, ip) is not None
 
-# Hàm nhận tin nhắn từ server
-# def receive_messages(client_socket):
-#     while True:
-#         try:
-#             message = client_socket.recv(1024).decode('utf-8')
-#             if message:
-#                 print(f"[SERVER] {message}")
-#             else:
-#                 break
-#         except:
-#             print("An error occurred!")
-#             break
+def is_valid_port(port):
+    return isinstance(port, int) and 0 <= port <= 65535
 
-# # Thiết lập client
-# def start_client(host='127.0.0.1', port=12345):
-#     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#     client.connect((host, port))
-
-#     # Bắt đầu luồng nhận tin nhắn
-#     thread = threading.Thread(target=receive_messages, args=(client,))
-#     thread.start()
-
-#     while True:
-#         # message = input("Enter message: ")
-#         time.sleep(1)
-#         message = '1'
-#         if message.lower() == 'exit':
-#             break
-#         client.send(message.encode('utf-8'))
-
-#     client.close()
-
-    #-------------------------------------------------------
+#-------------------------------------------------------
 
 if __name__ == "__main__":
     import sys
