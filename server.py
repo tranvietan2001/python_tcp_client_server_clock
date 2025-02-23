@@ -44,11 +44,14 @@ def handle_client(client_socket, addr):
             message = client_socket.recv(1024).decode('utf-8')
             if not message:
                 break
-            
-            print(f"[MESSAGE FROM {addr}] {message}")
-            
+            if(message == "check"):
+                print(f"[MESSAGE FROM {addr}] {message}")
+                client_socket.send(f"Server received: {"connected"}".encode('utf-8'))
+            else:
+                print(f"[MESSAGE FROM {addr}] {message}")
+                client_socket.send(f"Server received: {message}".encode('utf-8'))
             # Gửi lại tin nhắn đến client
-            client_socket.send(f"Server received: {message}".encode('utf-8'))
+             
         
         except ConnectionResetError:
             break

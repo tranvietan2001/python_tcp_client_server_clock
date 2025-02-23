@@ -74,7 +74,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("CLOCK TCP")
         # MainWindow.resize(622, 790)
-        MainWindow.setFixedSize(622, 790)
+        MainWindow.setFixedSize(622, 500) #790
         self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.label = QtWidgets.QLabel(parent=self.centralwidget)
@@ -240,8 +240,12 @@ class Ui_MainWindow(object):
         
         #-------------------------------------------------------
         self.statusCloseWindow = False
+        self.threadRecvRunning = False
+        self.threadTransRunning = False
+        self.clientClose = None
         app.aboutToQuit.connect(self.closeEvent)
         self.connectBtn.clicked.connect(self.connectWithServer)
+        self.requestBtn.clicked.connect(self.requestTime)
         #-------------------------------------------------------
 
 
@@ -277,31 +281,53 @@ class Ui_MainWindow(object):
     #-------------------------------------------------------
 
     def connectWithServer(self):
-        print("CONNNECT")
-        ip = self.ipServerTxt.text()
-        port = int(self.portServerTxt.text())
+        if(self.connectBtn.text() == "Connect"):
+            print("CONNNECT")
+            ip = self.ipServerTxt.text()
+            port = int(self.portServerTxt.text())
 
-        if is_valid_ipv4(ip) and is_valid_port(int(port)):
-            print(ip, ":", port)
-            start_thread = threading.Thread(target=self.start_client, args=(ip,int(port)))
-            start_thread.start()
+            if is_valid_ipv4(ip) and is_valid_port(int(port)):
+                print(ip, ":", port)
+                start_thread = threading.Thread(target=self.start_client, args=(ip,int(port)))
+                start_thread.start()
+                
+            else: 
+                self.statusConnectLb.setText("IPv4 ERROR")
+        else:
+            print("DISCONNECT BTN EVENT")
+            self.connectBtn.setText("Connect")
             
-        else: 
-            self.statusConnectLb.setText("IPv4 ERROR")
+
+    def requestTime(self):
+        print("REQUEST TIM BTN EVENT")
+
+        area = self.areaTxt.currentText() 
+        country = self.countryTxt.currentText()
+
+        print(area, "-", country)
+
 
 
     def closeEvent(self):
         print("close Window")  # In ra thông báo khi cửa sổ đóng
         self.statusCloseWindow = True
+        
 
     def receive_messages(self, client_socket):
-        while True:
+        self.threadRecvRunning = True
+        while self.threadRecvRunning:
             try:
                 message = client_socket.recv(1024).decode('utf-8')
                 if message:
-                    print(f"[SERVER] {message}")
-                    self.statusConnectLb.setText("Status: Connected")
-                    self.connectBtn.setEnabled(False)
+                    print(message)
+                    if (message == "Server received: connected"):
+                        print("Connect OK")
+                        self.statusConnectLb.setText("Status: Connected")
+                        # self.connectBtn.setEnabled(False)
+                        self.connectBtn.setText("Disconnect")
+                        self.threadRecvRunning = False
+                    else:
+                        print("TIME")
                 else:
                     break
             except:
@@ -309,30 +335,43 @@ class Ui_MainWindow(object):
                 self.statusConnectLb.setText("Status: ERROR")
                 self.connectBtn.setEnabled(True)
                 break
-
+    
+            
+    
     # Thiết lập client
     def start_client(self, host, port):
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect((host, port))
+        
+        # self.clientClose = client
 
+        # message_check_receive = client.recv(1024).decode('utf-8')
+
+        # if(message_check_receive == 'OK'):
+        #     self.connectBtn.setText("Disconnect")
+        
         # Bắt đầu luồng nhận tin nhắn
         thread = threading.Thread(target=self.receive_messages, args=(client,))
         thread.start()
+        
+        message_check_send = "check"
+        client.send(message_check_send.encode('utf-8'))
 
-        running = True
-        while running:
-            # message = input("Enter message: ")
-            if(self.statusCloseWindow):
-                self.statusConnectLb.setText("Status: Disconnect")
-                self.connectBtn.setEnabled(True)
-                running = False
-            time.sleep(0.5)
-            message = '1'
-            if message.lower() == 'exit':
-                break
-            client.send(message.encode('utf-8'))
 
-        client.close()
+        # running = True
+        # while running:
+        #     # message = input("Enter message: ")
+        #     if(self.statusCloseWindow):
+        #         self.statusConnectLb.setText("Status: Disconnect")
+        #         self.connectBtn.setEnabled(True)
+        #         running = False
+        #     time.sleep(0.5)
+        #     message = '1'
+        #     if message.lower() == 'exit':
+        #         break
+        #     client.send(message.encode('utf-8'))
+
+        # client.close()
 
 #hàm kiểm tra biểu thức chính quy của địa chỉ IPv4
 def is_valid_ipv4(ip):
