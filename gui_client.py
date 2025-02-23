@@ -235,15 +235,18 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-        
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
         self.statusCloseWindow = False
         self.threadRecvRunning = False
         self.threadTransRunning = False
+        self.threadRecvTimeFromServerRunning = False
+
         self.clientClose = None
         app.aboutToQuit.connect(self.closeEvent)
         self.connectBtn.clicked.connect(self.connectWithServer)
-        self.requestBtn.clicked.connect(self.on_country_selected)
+        # self.requestBtn.clicked.connect(self.on_country_selected)
+        self.requestBtn.clicked.connect(self.requestTime)
         #-------------------------------------------------------
 
     def retranslateUi(self, MainWindow):
@@ -251,17 +254,7 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "CLOCK"))
 
         self.label.setText(_translate("MainWindow", "Area:"))
-        # self.areaTxt.setItemText(0, _translate("MainWindow", "item1"))
-        # self.areaTxt.setItemText(1, _translate("MainWindow", "item2"))
-        # self.areaTxt.setItemText(2, _translate("MainWindow", "item3"))
-        # self.areaTxt.setItemText(3, _translate("MainWindow", "item4"))
-
         self.label_2.setText(_translate("MainWindow", "Country:"))
-        # self.countryTxt.setItemText(0, _translate("MainWindow", "item1"))
-        # self.countryTxt.setItemText(1, _translate("MainWindow", "item2"))
-        # self.countryTxt.setItemText(2, _translate("MainWindow", "item3"))
-        # self.countryTxt.setItemText(3, _translate("MainWindow", "item4"))
-
 
         self.label_3.setText(_translate("MainWindow", "IPv4 Server connect:"))
         self.label_port.setText(_translate("MainWindow", "Port:"))
@@ -377,8 +370,12 @@ class Ui_MainWindow(object):
 
                 # print(count, ": ", country, "-", location )
 
-                    # country, location = line.split(": ")
                 countries[country] = location
+                # Nếu quốc gia đã có trong từ điển, thêm vị trí vào danh sách
+                # if country in countries:
+                #     countries[country].append(location)  # Thêm vị trí vào danh sách
+                # else:
+                #     countries[country] = [location]  # Khởi tạo danh sách nếu chưa có
 
 
             print(count)
@@ -439,7 +436,6 @@ class Ui_MainWindow(object):
 
     def connectWithServer(self):
         if(self.connectBtn.text() == "Connect"):
-            print("CONNNECT")
             ip = self.ipServerTxt.text()
             port = int(self.portServerTxt.text())
 
@@ -451,19 +447,60 @@ class Ui_MainWindow(object):
             else: 
                 self.statusConnectLb.setText("IPv4 ERROR")
         else:
-            print("DISCONNECT BTN EVENT")
             self.connectBtn.setText("Connect")
+            self.statusConnectLb.setText("Status: Disconnected")
+            self.client.close()
             
 
     def requestTime(self):
-        print("REQUEST TIM BTN EVENT")
+        print("REQUEST TIME BTN EVENT")
 
         area = self.areaTxt.currentText() 
         country = self.countryTxt.currentText()
+        region = ''
+        if(area == country):
+            region = area
+        else:
+            region = area +"/" + country
+        print(region)
 
-        print(area, "-", country)
+        thread_request_time = threading.Thread(target=self.client_start_request_time, args=(region,))
+        thread_request_time.start()
+        
 
+    def client_start_request_time(self, region):
+        
+        thread = threading.Thread(target=self.client_receive_time_from_server, args=(self.client,))
+        thread.start()
+        running = True
+        while running:
+            # message = input("Enter message: ")
+            if(self.statusCloseWindow):
+                self.statusConnectLb.setText("Status: Disconnect")
+                # self.connectBtn.setEnabled(True)
+                running = False
+            time.sleep(0.5)
+            message = region
+            self.client.send(message.encode('utf-8'))
 
+        self.client.close()
+
+    def client_receive_time_from_server(self, client_socket):
+        print("client_receive_time_from_server")
+        self.threadRecvTimeFromServerRunning = True
+        while self.threadRecvTimeFromServerRunning:
+            try:
+                message = self.client.recv(1024).decode('utf-8')
+                if message:
+                    print(message)
+                    
+                else:
+                    break
+            except:
+                print("An error occurred!")
+                self.statusConnectLb.setText("Status: ERROR")
+                self.connectBtn.setEnabled(True)
+                break
 
     def closeEvent(self):
         print("close Window")  # In ra thông báo khi cửa sổ đóng
@@ -484,7 +521,7 @@ class Ui_MainWindow(object):
                         self.connectBtn.setText("Disconnect")
                         self.threadRecvRunning = False
                     else:
-                        print("TIME")
+                        print("ERROR")
                 else:
                     break
             except:
@@ -497,10 +534,8 @@ class Ui_MainWindow(object):
     
     # Thiết lập client
     def start_client(self, host, port):
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect((host, port))
-        
-        # self.clientClose = client
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client.connect((host, port))
 
         # message_check_receive = client.recv(1024).decode('utf-8')
 
@@ -508,11 +543,11 @@ class Ui_MainWindow(object):
         #     self.connectBtn.setText("Disconnect")
         
         # Bắt đầu luồng nhận tin nhắn
-        thread = threading.Thread(target=self.receive_messages, args=(client,))
+        thread = threading.Thread(target=self.receive_messages, args=(self.client,))
         thread.start()
         
         message_check_send = "check"
-        client.send(message_check_send.encode('utf-8'))
+        self.client.send(message_check_send.encode('utf-8'))
 
 
         # running = True

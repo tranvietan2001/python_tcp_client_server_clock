@@ -21,10 +21,11 @@ def handle_client(client_socket, addr):
                 client_socket.send(f"Server received: {"connected"}".encode('utf-8'))
             else:
                 print(f"[MESSAGE FROM {addr}] {message}")
-                country_name = pytz.timezone("America/Argentina/Catamarca")
+                country_name = pytz.timezone("Asia/Ho_Chi_Minh")
                 country_time = datetime.now(country_name)
+                print(country_time.strftime("%d-%m-%y*%H:%M:%S"))
 
-                client_socket.send(f"CLOCK: {country_time.strftime("%d-%m-%y*%H:%M:%S")}".encode('utf-8'))
+                # client_socket.send(f"CLOCK: {country_time.strftime("%d-%m-%y*%H:%M:%S")}".encode('utf-8'))
             # Gửi lại tin nhắn đến client
              
         
