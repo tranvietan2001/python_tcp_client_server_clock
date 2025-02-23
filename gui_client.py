@@ -261,7 +261,7 @@ class Ui_MainWindow(object):
         self.clientClose = None
         app.aboutToQuit.connect(self.closeEvent)
         self.connectBtn.clicked.connect(self.connectWithServer)
-        # self.requestBtn.clicked.connect(self.on_country_selected)
+        self.requestBtn.clicked.connect(self.on_country_selected)
         self.requestBtn.clicked.connect(self.requestTime)
         #-------------------------------------------------------
 
