@@ -15,8 +15,8 @@
 
 
 
-import pytz
-from datetime import datetime
+# import pytz
+# from datetime import datetime
 
 # def get_time_in_timezone(timezone):
 #     # Lấy thời gian hiện tại theo múi giờ cụ thể
@@ -321,11 +321,44 @@ from datetime import datetime
 
 
 
-country_name = pytz.timezone("America/Argentina/Catamarca")
-country_time = datetime.now(country_name)
-print(country_name)
-print(country_time)
-print(country_time.strftime("%d-%m-%y -------- %H:%M:%S"))
+# country_name = pytz.timezone("America/Buenos_Aires")
+# country_time = datetime.now(country_name)
+# print(country_name)
+# print(country_time)
+# print(country_time.strftime("%d-%m-%y -------- %H:%M:%S"))
+
+# print("------------------------")
+
+# def load_countries_from_file(file_path):
+#     countries = {}
+#     with open(file_path, 'r') as file:
+#         for line in file:
+#             # Loại bỏ dấu cách và ký tự không cần thiết
+#             line = line.strip().strip("'")
+#             if line:
+#                 # Tách tên quốc gia và vị trí
+#                 country, location = line.split("': '")
+#                 countries[country.strip()] = location.strip()
+        
+#         print(countries)
+#     return countries
+
+# def filter_country_by_region(region, countries):
+#     print("*****") 
+#     for country, location in countries.items():
+#         if location == region:
+#             print(country)
+
+# # Đường dẫn tới tệp countries.txt
+# file_path = 'countries.txt'
+
+# # Tải dữ liệu từ tệp
+# countries = load_countries_from_file(file_path)
+
+# # Gọi hàm với các vùng cụ thể
+# filter_country_by_region('Asia/Kabul', countries)  # In ra Afghanistan
+# filter_country_by_region('CET/CET', countries)          # In ra Europe
+
 
 
 # from PyQt6.QtCore import QPoint, Qt, QTime, QTimer
@@ -404,3 +437,36 @@ print(country_time.strftime("%d-%m-%y -------- %H:%M:%S"))
 #     clock = AnalogClock()
 #     clock.show()
 #     sys.exit(app.exec())
+
+
+
+
+import json
+
+def load_countries_from_json(file_path):
+    with open(file_path, 'r') as file:
+        countries = json.load(file)
+
+    print(countries)
+    return countries
+
+def get_country_code(country_name, countries):
+    for code, name in countries.items():
+        if name.lower() == country_name.lower():
+            return code
+    return None
+
+# Đường dẫn tới tệp countries_flag.json
+file_path = 'countries_flag.json'
+
+# Tải dữ liệu từ tệp
+countries = load_countries_from_json(file_path)
+
+# Ví dụ đầu vào
+input_country = 'Bangladesh'
+country_code = get_country_code(input_country, countries)
+
+if country_code:
+    print(f'The country code for {input_country} is {country_code}.')
+else:
+    print(f'Country not found: {input_country}.')
