@@ -15,8 +15,8 @@
 
 
 
-# import pytz
-# from datetime import datetime
+import pytz
+from datetime import datetime
 
 # def get_time_in_timezone(timezone):
 #     # Lấy thời gian hiện tại theo múi giờ cụ thể
@@ -321,7 +321,7 @@
 
 
 
-# country_name = pytz.timezone("America/Buenos_Aires")
+# country_name = pytz.timezone("Antarctica/Casey")
 # country_time = datetime.now(country_name)
 # print(country_name)
 # print(country_time)
@@ -441,32 +441,32 @@
 
 
 
-import json
+# import json
 
-def load_countries_from_json(file_path):
-    with open(file_path, 'r') as file:
-        countries = json.load(file)
+# def load_countries_from_json(file_path):
+#     with open(file_path, 'r') as file:
+#         countries = json.load(file)
 
-    print(countries)
-    return countries
+#     print(countries)
+#     return countries
 
-def get_country_code(country_name, countries):
-    for code, name in countries.items():
-        if name.lower() == country_name.lower():
-            return code
-    return None
+# def get_country_code(country_name, countries):
+#     for code, name in countries.items():
+#         if name.lower() == country_name.lower():
+#             return code
+#     return None
 
-# Đường dẫn tới tệp countries_flag.json
-file_path = 'countries_flag.json'
+# # Đường dẫn tới tệp countries_flag.json
+# file_path = 'countries_flag.json'
 
-# Tải dữ liệu từ tệp
-countries = load_countries_from_json(file_path)
+# # Tải dữ liệu từ tệp
+# countries = load_countries_from_json(file_path)
 
-# Ví dụ đầu vào
-input_country = 'Bangladesh'
-country_code = get_country_code(input_country, countries)
+# # Ví dụ đầu vào
+# input_country = 'Bangladesh'
+# country_code = get_country_code(input_country, countries)
 
-if country_code:
-    print(f'The country code for {input_country} is {country_code}.')
-else:
-    print(f'Country not found: {input_country}.')
+# if country_code:
+#     print(f'The country code for {input_country} is {country_code}.')
+# else:
+#     print(f'Country not found: {input_country}.')

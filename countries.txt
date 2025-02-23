@@ -6,7 +6,6 @@
 'Albania': 'Europe/Tirane'
 'Armenia': 'Asia/Yerevan'
 'Angola': 'Africa/Luanda'
-'Antarctica': 'Antarctica'
 'Argentina': 'America/Buenos_Aires'
 'Argentina': 'America/Catamarca'
 'Argentina': 'America/Cordoba'

@@ -49,6 +49,17 @@ class AnalogClock(QtWidgets.QWidget):
         painter.translate(self.width() / 2, self.height() / 2)
         painter.scale(side / 200, side / 200)
 
+        #vẽ 12 vạch 12 số
+        for i in range(12):
+            painter.drawLine(88, 0, 96, 0)
+            painter.rotate(30.0)
+
+        #vẽ 60 vạch phút
+        for j in range(60):
+            if (j % 5) != 0:
+                painter.drawLine(92, 0, 96, 0)
+            painter.rotate(6.0)
+
         # Vẽ giờ
         painter.setBrush(AnalogClock.hourColor)
         painter.save()
@@ -75,7 +86,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("CLOCK TCP")
         # MainWindow.resize(622, 790)
-        MainWindow.setFixedSize(622, 500) #790
+        MainWindow.setFixedSize(650, 650) #790
         self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.label = QtWidgets.QLabel(parent=self.centralwidget)
@@ -107,6 +118,8 @@ class Ui_MainWindow(object):
         font.setBold(True)
         font.setWeight(75)
         self.timeLCDNumber.setFont(font)
+        self.timeLCDNumber.setStyleSheet("color: red;")
+        self.timeLCDNumber.setDigitCount(10)
         self.timeLCDNumber.setObjectName("timeLCDNumber")
         self.label_3 = QtWidgets.QLabel(parent=self.centralwidget)
         self.label_3.setGeometry(QtCore.QRect(10, 50, 131, 16))
@@ -221,7 +234,7 @@ class Ui_MainWindow(object):
 
         # Thêm đồng hồ vào GUI
         self.clock = AnalogClock(parent=self.centralwidget)
-        self.clock.setGeometry(QtCore.QRect(200, 250, 200, 200))  # Điều chỉnh kích thước và vị trí
+        self.clock.setGeometry(QtCore.QRect(200, 250, 300, 300))  # Điều chỉnh kích thước và vị trí
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
@@ -241,7 +254,10 @@ class Ui_MainWindow(object):
         self.threadRecvRunning = False
         self.threadTransRunning = False
         self.threadRecvTimeFromServerRunning = False
-
+        self.threadRequestTime = False
+        self.region = ''
+        self.receiveDate = ''
+        self.receiveTime = ''
         self.clientClose = None
         app.aboutToQuit.connect(self.closeEvent)
         self.connectBtn.clicked.connect(self.connectWithServer)
@@ -457,18 +473,22 @@ class Ui_MainWindow(object):
 
         area = self.areaTxt.currentText() 
         country = self.countryTxt.currentText()
-        region = ''
+        
         if(area == country):
-            region = area
+            self.region = area
         else:
-            region = area +"/" + country
-        print(region)
+            self.region = area +"/" + country
+        print(self.region)
 
-        thread_request_time = threading.Thread(target=self.client_start_request_time, args=(region,))
-        thread_request_time.start()
+        if(self.threadRequestTime == False):
+            thread_request_time = threading.Thread(target=self.client_start_request_time)
+            thread_request_time.start()
+            self.threadRequestTime = True
+        else:
+            print("client_start_request_time: running")
         
 
-    def client_start_request_time(self, region):
+    def client_start_request_time(self):
         
         thread = threading.Thread(target=self.client_receive_time_from_server, args=(self.client,))
         thread.start()
@@ -479,29 +499,47 @@ class Ui_MainWindow(object):
                 self.statusConnectLb.setText("Status: Disconnect")
                 # self.connectBtn.setEnabled(True)
                 running = False
-            time.sleep(0.5)
-            message = region
+            time.sleep(1)
+            message = self.region
+            print("client_start_request_time:", message)
             self.client.send(message.encode('utf-8'))
-
+        self.threadRequestTime = False
         self.client.close()
 
     def client_receive_time_from_server(self, client_socket):
-        print("client_receive_time_from_server")
+        
         self.threadRecvTimeFromServerRunning = True
         while self.threadRecvTimeFromServerRunning:
             try:
+                print("client_receive_time_from_server")
                 message = self.client.recv(1024).decode('utf-8')
+                print("MESS: ",message)
                 if message:
                     print(message)
-                    
+                    self.receiveDate = message
+                    if(self.receiveDate == "Server received: xconnected"):
+                        self.dateTxt.setText("00/00/0000")
+                    else:
+                        
+                        r_date, r_time = self.receiveDate.split('*')
+                        r_date = r_date.strip()
+                        r_time = r_time.strip()
+                        r_day, r_month, r_year = r_date.split('-')
+                        r_year = '20' + r_year
+                        r_date = r_day + "/" + r_month + "/" + r_year
+                        self.dateTxt.setText(r_date)
+                        self.timeLCDNumber.display(r_time)
+                        r_h, r_m, r_s = r_time.split(':')
                 else:
                     break
             except:
                 print("An error occurred!")
-                self.statusConnectLb.setText("Status: ERROR")
-                self.connectBtn.setEnabled(True)
+                self.statusConnectLb.setText("1.Status: ERROR")
+                self.connectBtn.setText("Connect")
+                self.threadRequestTime = False
                 break
-
+    
+    
     def closeEvent(self):
         print("close Window")  # In ra thông báo khi cửa sổ đóng
         self.statusCloseWindow = True
@@ -520,6 +558,8 @@ class Ui_MainWindow(object):
                         # self.connectBtn.setEnabled(False)
                         self.connectBtn.setText("Disconnect")
                         self.threadRecvRunning = False
+                    elif (message == "Server received: xconnected"):
+                        break
                     else:
                         print("ERROR")
                 else:
@@ -527,7 +567,7 @@ class Ui_MainWindow(object):
             except:
                 print("An error occurred!")
                 self.statusConnectLb.setText("Status: ERROR")
-                self.connectBtn.setEnabled(True)
+                self.connectBtn.setText("Connect")
                 break
     
             

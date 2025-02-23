@@ -19,13 +19,14 @@ def handle_client(client_socket, addr):
             if(message == "check"):
                 print(f"[MESSAGE FROM {addr}] {message}")
                 client_socket.send(f"Server received: {"connected"}".encode('utf-8'))
+                client_socket.send(f"Server received: {"xconnected"}".encode('utf-8'))
             else:
                 print(f"[MESSAGE FROM {addr}] {message}")
-                country_name = pytz.timezone("Asia/Ho_Chi_Minh")
+                country_name = pytz.timezone(message)
                 country_time = datetime.now(country_name)
                 print(country_time.strftime("%d-%m-%y*%H:%M:%S"))
 
-                # client_socket.send(f"CLOCK: {country_time.strftime("%d-%m-%y*%H:%M:%S")}".encode('utf-8'))
+                client_socket.send(f"{country_time.strftime("%d-%m-%y*%H:%M:%S")}".encode('utf-8'))
             # Gửi lại tin nhắn đến client
              
         
